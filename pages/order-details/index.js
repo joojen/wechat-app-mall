@@ -1,24 +1,12 @@
-var app = getApp();
+const app = getApp();
+const CONFIG = require('../../config.js')
+const WXAPI = require('apifm-wxapi')
 Page({
     data:{
       orderId:0,
-        goodsList:[
-            {
-                pic:'/images/goods02.png',
-                name:'爱马仕（HERMES）大地男士最多两行文字超出就这样显…',
-                price:'300.00',
-                label:'大地50ml',
-                number:2
-            },
-            {
-                pic:'/images/goods02.png',
-                name:'爱马仕（HERMES）大地男士最多两行文字超出就这样显…',
-                price:'300.00',
-                label:'大地50ml',
-                number:2
-            }
-        ],
-        yunPrice:"10.00"
+      goodsList:[],
+      yunPrice:"0.00",
+      appid: CONFIG.appid
     },
     onLoad:function(e){
       var orderId = e.id;
@@ -29,26 +17,18 @@ Page({
     },
     onShow : function () {
       var that = this;
-      wx.request({
-        url: 'https://api.it120.cc/' + app.globalData.subDomain + '/order/detail',
-        data: {
-          token: app.globalData.token,
-          id: that.data.orderId
-        },
-        success: (res) => {
-          wx.hideLoading();
-          if (res.data.code != 0) {
-            wx.showModal({
-              title: '错误',
-              content: res.data.msg,
-              showCancel: false
-            })
-            return;
-          }
-          that.setData({
-            orderDetail: res.data.data
-          });
+      WXAPI.orderDetail(wx.getStorageSync('token'), that.data.orderId).then(function (res) {
+        if (res.code != 0) {
+          wx.showModal({
+            title: '错误',
+            content: res.msg,
+            showCancel: false
+          })
+          return;
         }
+        that.setData({
+          orderDetail: res.data
+        });
       })
       var yunPrice = parseFloat(this.data.yunPrice);
       var allprice = 0;
@@ -68,24 +48,16 @@ Page({
       })
     },
     confirmBtnTap:function(e){
-      var that = this;
-      var orderId = e.currentTarget.dataset.id;
+      let that = this;
+      let orderId = this.data.orderId;
       wx.showModal({
           title: '确认您已收到商品？',
           content: '',
           success: function(res) {
             if (res.confirm) {
-              wx.showLoading();
-              wx.request({
-                url: 'https://api.it120.cc/' + app.globalData.subDomain + '/order/delivery',
-                data: {
-                  token: app.globalData.token,
-                  orderId: orderId
-                },
-                success: (res) => {
-                  if (res.data.code == 0) {
-                    that.onShow();
-                  }
+              WXAPI.orderDelivery(wx.getStorageSync('token'), orderId).then(function (res) {
+                if (res.code == 0) {
+                  that.onShow();                  
                 }
               })
             }
@@ -93,18 +65,18 @@ Page({
       })
     },
     submitReputation: function (e) {
-      var that = this;
-      var postJsonString = {};
-      postJsonString.token = app.globalData.token;
+      let that = this;
+      let postJsonString = {};
+      postJsonString.token = wx.getStorageSync('token');
       postJsonString.orderId = this.data.orderId;
-      var reputations = [];
-      var i = 0;
+      let reputations = [];
+      let i = 0;
       while (e.detail.value["orderGoodsId" + i]) {
-        var orderGoodsId = e.detail.value["orderGoodsId" + i];
-        var goodReputation = e.detail.value["goodReputation" + i];
-        var goodReputationRemark = e.detail.value["goodReputationRemark" + i];
+        let orderGoodsId = e.detail.value["orderGoodsId" + i];
+        let goodReputation = e.detail.value["goodReputation" + i];
+        let goodReputationRemark = e.detail.value["goodReputationRemark" + i];
 
-        var reputations_json = {};
+        let reputations_json = {};
         reputations_json.id = orderGoodsId;
         reputations_json.reputation = goodReputation;
         reputations_json.remark = goodReputationRemark;
@@ -113,17 +85,11 @@ Page({
         i++;
       }
       postJsonString.reputations = reputations;
-      wx.showLoading();
-      wx.request({
-        url: 'https://api.it120.cc/' + app.globalData.subDomain + '/order/reputation',
-        data: {
-          postJsonString: postJsonString
-        },
-        success: (res) => {
-          wx.hideLoading();
-          if (res.data.code == 0) {
-            that.onShow();
-          }
+      WXAPI.orderReputation({
+        postJsonString: JSON.stringify(postJsonString)
+      }).then(function (res) {
+        if (res.code == 0) {
+          that.onShow();
         }
       })
     }

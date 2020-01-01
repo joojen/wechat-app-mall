@@ -3,6 +3,7 @@
  * organization: WeAppDev(微信小程序开发论坛)(http://weappdev.com)
  *               垂直微信小程序开发交流社区
  * 
+Latest commit 405d856 on 9 Nov 2017
  * github地址: https://github.com/icindy/wxParse
  * 
  * for: 微信小程序富文本解析
@@ -33,12 +34,12 @@ function wxParse(bindName = 'wxParseData', type='html', data='<div class="color:
   var transData = {};//存放转化后的数据
   if (type == 'html') {
     transData = HtmlToJson.html2json(data, bindName);
-    console.log(JSON.stringify(transData, ' ', ' '));
+    //console.log(JSON.stringify(transData, ' ', ' '));
   } else if (type == 'md' || type == 'markdown') {
     var converter = new showdown.Converter();
     var html = converter.makeHtml(data);
     transData = HtmlToJson.html2json(html, bindName);
-    console.log(JSON.stringify(transData, ' ', ' '));
+    //console.log(JSON.stringify(transData, ' ', ' '));
   }
   transData.view = {};
   transData.view.imagePadding = 0;
